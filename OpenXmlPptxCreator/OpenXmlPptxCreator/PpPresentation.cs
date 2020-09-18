@@ -1,12 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using System.Collections.Generic;
-using System.IO;
-using System.Drawing;
-using System.Drawing.Imaging;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
@@ -14,7 +8,6 @@ using DocumentFormat.OpenXml.Presentation;
 using P = DocumentFormat.OpenXml.Presentation;
 using D = DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office2010.Drawing;
-using NonVisualDrawingProperties = DocumentFormat.OpenXml.Presentation.NonVisualDrawingProperties;
 
 namespace OpenXmlPptxCreator
 {
@@ -42,7 +35,7 @@ namespace OpenXmlPptxCreator
             presentationWidth = width;
             presentationHeight = height;
 
-            firstSlide = CreatePresentationParts(width, height); //9144000, 6858000
+            firstSlide = CreatePresentationParts(width, height);
         }
 
         public void AddSlideWithImage(string imagePath)
@@ -56,6 +49,22 @@ namespace OpenXmlPptxCreator
             {
                 Slide slide = InsertSlide( string.Empty);
                 InsertImageInLastSlide(slide, imagePath, "image/png", presentationWidth, presentationHeight);
+                presentationPart.Presentation.Save();
+            }
+            countOfSlidesWithContent++;
+        }
+
+        public void AddSlideWithImage(Stream stream)
+        {
+            if (countOfSlidesWithContent == 0)
+            {
+                InsertImageInLastSlide(firstSlide, stream, "image/png", presentationWidth, presentationHeight);
+                firstSlide.Save();
+            }
+            else
+            {
+                Slide slide = InsertSlide(string.Empty);
+                InsertImageInLastSlide(slide, stream, "image/png", presentationWidth, presentationHeight);
                 presentationPart.Presentation.Save();
             }
             countOfSlidesWithContent++;
@@ -434,13 +443,20 @@ namespace OpenXmlPptxCreator
             }
         }
 
+        private void InsertImageInLastSlide(Slide slide, string imagePath, string imageExt, Int64Value width,
+            Int64Value height)
+        {
+            FileStream fileStream = new FileStream(imagePath, FileMode.Open);
+            InsertImageInLastSlide(slide, fileStream, imageExt, width, height);
+        }
+
         /// <summary>
         /// Insert Image into Slide
         /// </summary>
         /// <param name="filePath">PowerPoint Path</param>
         /// <param name="imagePath">Image Path</param>
         /// <param name="imageExt">Image Extension</param>
-        private void InsertImageInLastSlide(Slide slide, string imagePath, string imageExt, Int64Value width, Int64Value height)
+        private void InsertImageInLastSlide(Slide slide, Stream imageStream, string imageExt, Int64Value width, Int64Value height)
         {
             // Creates an Picture instance and adds its children.
             P.Picture picture = new P.Picture();
@@ -485,9 +501,8 @@ namespace OpenXmlPptxCreator
 
             // Generates content of imagePart.
             ImagePart imagePart = slide.SlidePart.AddNewPart<ImagePart>(imageExt, embedId);
-            FileStream fileStream = new FileStream(imagePath, FileMode.Open);
-            imagePart.FeedData(fileStream);
-            fileStream.Close();
+            imagePart.FeedData(imageStream);
+            imageStream.Close();
         }
 
         #endregion
