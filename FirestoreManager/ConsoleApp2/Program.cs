@@ -19,7 +19,7 @@ namespace ConsoleApp2
 	{
 		static async Task Main(string[] args)
 		{
-			var jsonConfig = File.ReadAllText(@"fitness365-677dc-888fd74f823c.json");
+			var jsonConfig = File.ReadAllText( Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fitness365-677dc-888fd74f823c.json"));
 
 			var dbBuilder = new FirestoreDbBuilder();
 			dbBuilder.ProjectId = "fitness365-677dc";
